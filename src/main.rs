@@ -3,14 +3,12 @@ pub mod is_zero_gadget;
 use halo2_proofs::{
     arithmetic::FieldExt,
     circuit::{AssignedCell, Layouter, SimpleFloorPlanner, Value},
+    dev::MockProver,
+    pasta::Fp as F,
     plonk::{Advice, Circuit, Column, ConstraintSystem, Error, Expression, Selector},
     poly::Rotation,
 };
 use is_zero_gadget::*;
-
-fn main() {
-    println!("Hello, world!");
-}
 
 #[derive(Debug, Clone)]
 pub struct CustomConfig<F> {
@@ -127,4 +125,17 @@ impl<F: FieldExt> Circuit<F> for CustomCircuit<F> {
 
         Ok(())
     }
+}
+
+fn main() {
+    let k = 4;
+
+    let circuit = CustomCircuit {
+        a: F::from(10),
+        b: F::from(15),
+        c: F::from(18),
+    };
+
+    let prover = MockProver::run(k, &circuit, vec![]).unwrap();
+    prover.assert_satisfied();
 }
