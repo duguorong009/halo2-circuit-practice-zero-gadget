@@ -128,7 +128,7 @@ impl<F: FieldExt> Circuit<F> for CustomCircuit<F> {
 }
 
 fn main() {
-    let k = 4;
+    let k = 3;
 
     let circuit = CustomCircuit {
         a: F::from(10),
