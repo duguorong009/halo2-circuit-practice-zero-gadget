@@ -138,4 +138,15 @@ fn main() {
 
     let prover = MockProver::run(k, &circuit, vec![]).unwrap();
     prover.assert_satisfied();
+
+    // Plot the circuit
+    use plotters::prelude::*;
+    let root = BitMapBackend::new("Zero-gadget-test-layout.png", (1024, 1024)).into_drawing_area();
+    root.fill(&WHITE).unwrap();
+    let root = root
+        .titled("Zero-gadget test Layout", ("sans-serif", 60))
+        .unwrap();
+    halo2_proofs::dev::CircuitLayout::default()
+        .render(k, &circuit, &root)
+        .unwrap();
 }
