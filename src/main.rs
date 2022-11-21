@@ -2,7 +2,8 @@ pub mod is_zero_gadget;
 
 use halo2_proofs::{
     arithmetic::FieldExt,
-    plonk::{Advice, Column, ConstraintSystem, Expression, Selector},
+    circuit::{AssignedCell, Layouter, Value},
+    plonk::{Advice, Column, ConstraintSystem, Error, Expression, Selector},
     poly::Rotation,
 };
 use is_zero_gadget::*;
@@ -72,5 +73,29 @@ impl<F: FieldExt> CustomChip<F> {
             a_equals_b,
             output,
         }
+    }
+
+    pub fn assign(
+        &self,
+        mut layouter: impl Layouter<F>,
+        a: F,
+        b: F,
+        c: F,
+    ) -> Result<AssignedCell<F, F>, Error> {
+        let is_zero_chip = IsZeroChip::construct(self.config.a_equals_b.clone());
+
+        layouter.assign_region(
+            || "f(a, b, c) = if a == b {c} else {a - b}",
+            |mut region| {
+                self.config.s.enable(&mut region, 0)?;
+                region.assign_advice(|| "a", self.config.a, 0, || Value::known(a))?;
+                region.assign_advice(|| "b", self.config.b, 0, || Value::known(b))?;
+                region.assign_advice(|| "c", self.config.c, 0, || Value::known(c))?;
+                is_zero_chip.assign(&mut region, 0, Value::known(a - b))?;
+
+                let output = if a == b { c } else { a - b };
+                region.assign_advice(|| "output", self.config.output, 0, || Value::known(output))
+            },
+        )
     }
 }
