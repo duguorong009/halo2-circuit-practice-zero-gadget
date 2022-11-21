@@ -2,8 +2,8 @@ pub mod is_zero_gadget;
 
 use halo2_proofs::{
     arithmetic::FieldExt,
-    circuit::{AssignedCell, Layouter, Value},
-    plonk::{Advice, Column, ConstraintSystem, Error, Expression, Selector},
+    circuit::{AssignedCell, Layouter, SimpleFloorPlanner, Value},
+    plonk::{Advice, Circuit, Column, ConstraintSystem, Error, Expression, Selector},
     poly::Rotation,
 };
 use is_zero_gadget::*;
@@ -97,5 +97,34 @@ impl<F: FieldExt> CustomChip<F> {
                 region.assign_advice(|| "output", self.config.output, 0, || Value::known(output))
             },
         )
+    }
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct CustomCircuit<F> {
+    pub a: F,
+    pub b: F,
+    pub c: F,
+}
+
+impl<F: FieldExt> Circuit<F> for CustomCircuit<F> {
+    type Config = CustomConfig<F>;
+
+    type FloorPlanner = SimpleFloorPlanner;
+
+    fn without_witnesses(&self) -> Self {
+        Self::default()
+    }
+
+    fn configure(meta: &mut ConstraintSystem<F>) -> Self::Config {
+        CustomChip::configure(meta)
+    }
+
+    fn synthesize(&self, config: Self::Config, layouter: impl Layouter<F>) -> Result<(), Error> {
+        let chip = CustomChip::construct(config);
+
+        chip.assign(layouter, self.a, self.b, self.c)?;
+
+        Ok(())
     }
 }
